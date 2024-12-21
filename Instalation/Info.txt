@@ -1,0 +1,2 @@
+Air vent size = 52mm with black surrounding
+                          60mm without

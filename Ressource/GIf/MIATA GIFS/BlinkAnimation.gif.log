@@ -1,0 +1,22 @@
+C:/Program Files/Krita (x64)/bin/ffmpeg.exe -hide_banner -y -y -r 12 -start_number 0 -start_number_range 1 -i C:/Users/yanni/Desktop/MIATA GIFS/image%04d.png -i C:/Users/yanni/Desktop/MIATA GIFS/KritaTempPalettegen_%06d.png -lavfi [0:v][1:v]paletteuse=dither=sierra2_4a:diff_mode=none -f gif -loop 0 -gifflags +transdiff C:/Users/yanni/Desktop/MIATA GIFS/BlinkAnimation.gif
+=====================================================
+Input #0, image2, from 'C:/Users/yanni/Desktop/MIATA GIFS/image%04d.png':
+  Duration: 00:00:04.04, start: 0.000000, bitrate: N/A
+  Stream #0:0: Video: png, rgba(pc), 1920x1080 [SAR 5905:5905 DAR 16:9], 25 fps, 25 tbr, 25 tbn, 25 tbc
+Input #1, image2, from 'C:/Users/yanni/Desktop/MIATA GIFS/KritaTempPalettegen_%06d.png':
+  Duration: 00:00:00.04, start: 0.000000, bitrate: N/A
+  Stream #1:0: Video: png, rgba(pc), 16x16 [SAR 1:1 DAR 1:1], 25 fps, 25 tbr, 25 tbn, 25 tbc
+Stream mapping:
+  Stream #0:0 (png) -> paletteuse:default
+  Stream #1:0 (png) -> paletteuse:palette
+  paletteuse -> Stream #0:0 (gif)
+Press [q] to stop, [?] for help
+[image2 @ 000002df2596ab80] Thread message queue blocking; consider raising the thread_queue_size option (current value: 8)
+Output #0, gif, to 'C:/Users/yanni/Desktop/MIATA GIFS/BlinkAnimation.gif':
+  Metadata:
+    encoder         : Lavf58.76.100
+  Stream #0:0: Video: gif, pal8(pc, gbr/unknown/unknown, progressive), 1920x1080 [SAR 1:1 DAR 16:9], q=2-31, 200 kb/s, 12 fps, 100 tbn (default)
+    Metadata:
+      encoder         : Lavc58.134.100 gif
+frame=    1 fps=0.0 q=-0.0 size=       0kB time=00:00:00.01 bitrate=   0.0kbits/s speed=0.396x    frame=   10 fps=0.0 q=-0.0 size=      32kB time=00:00:00.76 bitrate= 348.7kbits/s speed=1.37x    frame=   20 fps= 18 q=-0.0 size=      43kB time=00:00:01.59 bitrate= 222.4kbits/s speed=1.45x    frame=   30 fps= 19 q=-0.0 size=      43kB time=00:00:02.43 bitrate= 146.3kbits/s speed=1.51x    frame=   40 fps= 19 q=-0.0 size=      44kB time=00:00:03.26 bitrate= 109.7kbits/s speed=1.54x    frame=   50 fps= 19 q=-0.0 size=      44kB time=00:00:04.09 bitrate=  87.9kbits/s speed=1.56x    frame=   60 fps= 19 q=-0.0 size=      44kB time=00:00:04.93 bitrate=  73.3kbits/s speed=1.58x    frame=   71 fps= 19 q=-0.0 size=      44kB time=00:00:05.84 bitrate=  62.3kbits/s speed=1.59x    frame=   82 fps= 20 q=-0.0 size=      45kB time=00:00:06.76 bitrate=  54.1kbits/s speed=1.61x    frame=   92 fps= 20 q=-0.0 size=      45kB time=00:00:07.59 bitrate=  48.5kbits/s speed=1.61x    frame=  101 fps= 19 q=-0.0 Lsize=      45kB time=00:00:08.34 bitrate=  44.4kbits/s speed=1.61x    
+video:45kB audio:0kB subtitle:0kB other streams:0kB global headers:0kB muxing overhead: 0.043262%
