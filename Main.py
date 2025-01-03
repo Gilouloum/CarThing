@@ -95,8 +95,8 @@ class CarGadgetApp:
 
     def simulate_speed(self):
         if self.simulation_running:
-            self.current_speed = (self.current_speed + 10) % 120
-            self.current_rpm = (self.current_rpm + 100) % 7000
+            #self.current_speed = (self.current_speed + 10) % 120
+            #self.current_rpm = (self.current_rpm + 100) % 7000
             self.update_display()
             self.update_background()  # Ajouter cette ligne
             self.update_miata_gif()
