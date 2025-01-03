@@ -595,7 +595,7 @@ class CarGadgetApp:
      self.update_rpm()
 
     def update_rpm(self):
-     if self.screen_mode == 2 and self.simulation_running:
+     if self.screen_mode == 2:
         # Update background GIF frame
         self.current_frame_rpm = (self.current_frame_rpm + 1) % len(self.gif_frames_rpm)
         self.canvas.itemconfig(self.rpm_image_id, image=self.gif_frames_rpm[self.current_frame_rpm])
