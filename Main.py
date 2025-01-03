@@ -595,7 +595,7 @@ class CarGadgetApp:
      self.update_rpm()
 
     def update_rpm(self):
-     if self.screen_mode == 2 and self.simulation_running:
+     if self.screen_mode == 2 and (self.simulation_running or self.use_obd2):
         # Update background GIF frame
         self.current_frame_rpm = (self.current_frame_rpm + 1) % len(self.gif_frames_rpm)
         self.canvas.itemconfig(self.rpm_image_id, image=self.gif_frames_rpm[self.current_frame_rpm])
@@ -618,7 +618,7 @@ class CarGadgetApp:
         self.canvas.itemconfig(self.rpm_text_id, text=f"{self.current_rpm}")
 
         # Cycle RPM from 0 to 7000
-        self.current_rpm = (self.current_rpm + 100) % 7001
+        #self.current_rpm = (self.current_rpm + 100) % 7001
 
         # Repeat update after 100ms
         self.root.after(100, self.update_rpm)
