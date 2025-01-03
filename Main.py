@@ -95,11 +95,9 @@ class CarGadgetApp:
 
     def simulate_speed(self):
         if self.simulation_running:
-            #self.current_speed = (self.current_speed + 10) % 120
-            #self.current_rpm = (self.current_rpm + 100) % 7000
+            self.current_speed = (self.current_speed + 10) % 120
+            self.current_rpm = (self.current_rpm + 100) % 7000
             self.update_display()
-            self.update_background()  # Ajouter cette ligne
-            self.update_miata_gif()
             self.root.after(1000, self.simulate_speed)
 
     def read_obd2_data(self):
@@ -440,7 +438,7 @@ class CarGadgetApp:
     import random
 
     def update_miata_gif(self):
-     if self.simulation_running or self.use_obd2:
+     if self.simulation_running:
         # Transition to high speed (miata20 then miata21)
         if self.current_speed >= 100:
             if not self.transition_playing and self.current_miata_gif_index != 7:
@@ -520,7 +518,7 @@ class CarGadgetApp:
 
 
     def update_background(self):
-     if self.simulation_running or self.use_obd2:  # Ensure background only updates when simulation is running
+     if self.simulation_running:  # Ensure background only updates when simulation is running
         # Define the speed limits for scaling
         min_speed = 0    # Minimum speed (no movement)
         max_speed = 175  # Maximum speed for 2x speed
@@ -551,7 +549,7 @@ class CarGadgetApp:
 
  
     def update_speed(self):
-     if self.screen_mode == 1 and  (self.simulation_running or self.use_obd2):
+     if self.screen_mode == 1 and self.simulation_running:
         self.canvas.itemconfig(self.speed_text_id, text=f"{self.current_speed} km/h")
 
         current_time = time.time()
@@ -597,7 +595,7 @@ class CarGadgetApp:
      self.update_rpm()
 
     def update_rpm(self):
-     if self.screen_mode == 2 and  (self.simulation_running or self.use_obd2):
+     if self.screen_mode == 2 and self.simulation_running:
         # Update background GIF frame
         self.current_frame_rpm = (self.current_frame_rpm + 1) % len(self.gif_frames_rpm)
         self.canvas.itemconfig(self.rpm_image_id, image=self.gif_frames_rpm[self.current_frame_rpm])
@@ -653,7 +651,7 @@ class CarGadgetApp:
 
 
     def update_fuel(self):
-     if self.screen_mode == 3 and  (self.simulation_running or self.use_obd2):
+     if self.screen_mode == 3 and self.simulation_running:
         # Update background animation
         self.current_frame_fuel = (self.current_frame_fuel + 1) % len(self.gif_frames_fuel)
         self.canvas.itemconfig(self.fuel_image_id, image=self.gif_frames_fuel[self.current_frame_fuel])
