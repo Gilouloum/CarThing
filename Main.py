@@ -10,80 +10,79 @@ import threading
 
 class CarGadgetApp:
     def __init__(self, root):
-     self.loading_complete = False  # Flag to indicate if loading is complete
+        self.loading_complete = False  # Flag to indicate if loading is complete
 
-     self.root = root
-     self.root.title("Car Gadget")
-     self.root.geometry("450x450")
-     self.canvas = tk.Canvas(self.root, width=450, height=450, bg='white')
-     self.canvas.pack()
+        self.root = root
+        self.root.title("Car Gadget")
+        self.root.geometry("450x450")
+        self.canvas = tk.Canvas(self.root, width=450, height=450, bg='white')
+        self.canvas.pack()
 
-     # Initialize menu to cover the entire screen
-     self.menu = tk.Frame(self.root, width=450, height=450, bg='black')
-     self.menu.place(x=0, y=-450)  # Place the menu off-screen initially
+        # Initialize menu to cover the entire screen
+        self.menu = tk.Frame(self.root, width=450, height=450, bg='black')
+        self.menu.place(x=0, y=-450)  # Place the menu off-screen initially
 
-     # Set button width based on available space (350px for buttons)
-     button_width = 350
+        # Set button width based on available space (350px for buttons)
+        button_width = 350
 
-     # Make the "Start Simulation" button larger and centered with a 50px border
-     self.start_simulation_button = tk.Button(self.menu, text="Start Simulation", command=self.toggle_simulation,
-                                              bg='black', fg='white', font=('Arial', 18, 'bold'),
-                                              height=3, width=int(button_width / 10))  # Adjust the width
-     self.start_simulation_button.place(relx=0.5, rely=0.3, anchor='center')  # Center the button in the menu
+        # Make the "Start Simulation" button larger and centered with a 50px border
+        self.start_simulation_button = tk.Button(self.menu, text="Start Simulation", command=self.toggle_simulation,
+                                                bg='black', fg='white', font=('Arial', 18, 'bold'),
+                                                height=3, width=int(button_width / 10))  # Adjust the width
+        self.start_simulation_button.place(relx=0.5, rely=0.3, anchor='center')  # Center the button in the menu
 
-     # Add the "Error" button for error checking, larger and centered with a 50px border
-     self.error_button = tk.Button(self.menu, text="Errors", command=self.show_error_page,
-                                   bg='black', fg='white', font=('Arial', 18, 'bold'),
-                                   height=3, width=int(button_width / 10))  # Adjust the width
-     self.error_button.place(relx=0.5, rely=0.5, anchor='center')  # Center the button
+        # Add the "Error" button for error checking, larger and centered with a 50px border
+        self.error_button = tk.Button(self.menu, text="Errors", command=self.show_error_page,
+                                    bg='black', fg='white', font=('Arial', 18, 'bold'),
+                                    height=3, width=int(button_width / 10))  # Adjust the width
+        self.error_button.place(relx=0.5, rely=0.5, anchor='center')  # Center the button
 
-     # Add the "Close App" button, larger and centered with a 50px border
-     self.close_app_button = tk.Button(self.menu, text="Close App", command=self.close_app,
-                                       bg='black', fg='white', font=('Arial', 18, 'bold'),
-                                       height=3, width=int(button_width / 10))  # Adjust the width
-     self.close_app_button.place(relx=0.5, rely=0.7, anchor='center')  # Center the button
+        # Add the "Close App" button, larger and centered with a 50px border
+        self.close_app_button = tk.Button(self.menu, text="Close App", command=self.close_app,
+                                        bg='black', fg='white', font=('Arial', 18, 'bold'),
+                                        height=3, width=int(button_width / 10))  # Adjust the width
+        self.close_app_button.place(relx=0.5, rely=0.7, anchor='center')  # Center the button
 
-     # Initialize swipe detection variables
-     self.start_y = None
-     self.swipe_threshold = 50
-     self.menu_visible = False
+        # Initialize swipe detection variables
+        self.start_y = None
+        self.swipe_threshold = 50
+        self.menu_visible = False
 
-     # Initialize simulation variables
-     self.current_speed = 0
-     self.current_rpm = 0
-     self.fuel_percentage = 100
-     self.simulation_running = False
-     self.transition_playing = False  # Track if the transition GIF is playing
-     self.transition_finished = False  # Track if transition is done
-     self.miata21_playing = False
-     self.reverse_transition_playing = False  # Track reverse transition
-     self.reverse_transition_finished = False  # Track if reverse transition is done
+        # Initialize simulation variables
+        self.current_speed = 0
+        self.current_rpm = 0
+        self.fuel_percentage = 100
+        self.simulation_running = False
+        self.transition_playing = False  # Track if the transition GIF is playing
+        self.transition_finished = False  # Track if transition is done
+        self.miata21_playing = False
+        self.reverse_transition_playing = False  # Track reverse transition
+        self.reverse_transition_finished = False  # Track if reverse transition is done
 
-     # Initialize frame counters
-     self.current_frame_intro = 0
-     self.current_frame_speed = 0
-     self.current_frame_rpm = 0
-     self.current_frame_fuel = 0
+        # Initialize frame counters
+        self.current_frame_intro = 0
+        self.current_frame_speed = 0
+        self.current_frame_rpm = 0
+        self.current_frame_fuel = 0
 
-     # Bind swipe
-     self.root.bind("<Button-1>", self.on_click)
-     self.root.bind("<B1-Motion>", self.on_swipe)
-     self.root.bind("<ButtonRelease-1>", self.on_swipe_end)
+        # Bind swipe
+        self.root.bind("<Button-1>", self.on_click)
+        self.root.bind("<B1-Motion>", self.on_swipe)
+        self.root.bind("<ButtonRelease-1>", self.on_swipe_end)
 
-     # Initialize the intro GIF and start it immediately
-     self.setup_intro_gif()
-     self.play_intro()
- 
-     self.total_distance = 0.0  # Total distance in kilometers
-     self.last_time = time.time()  # Track the last update time
+        # Initialize the intro GIF and start it immediately
+        self.setup_intro_gif()
+        self.play_intro()
 
-     # OBD2 setup
-     self.use_obd2 = False  # Flag to switch between OBD2 and simulation
-     self.connection = None  # OBD2 connection initialization
+        self.total_distance = 0.0  # Total distance in kilometers
+        self.last_time = time.time()  # Track the last update time
 
-     # Run heavy initialization in a separate thread
-     threading.Thread(target=self.deferred_initialization, daemon=True).start()
+        # OBD2 setup
+        self.use_obd2 = False  # Flag to switch between OBD2 and simulation
+        self.connection = None  # OBD2 connection initialization
 
+        # Run heavy initialization in a separate thread
+        threading.Thread(target=self.deferred_initialization, daemon=True).start()
 
 
 
@@ -95,38 +94,36 @@ class CarGadgetApp:
          self.connection = None
 
     def simulate_speed(self):
-     if self.simulation_running:
-        self.current_speed = random.randint(0, 120)  # Simulate speed
-        self.current_rpm = random.randint(800, 5000)  # Simulate RPM
-        print(f"Simulated Speed: {self.current_speed} km/h, RPM: {self.current_rpm}")
-        self.root.after(1000, self.simulate_speed)
+        if self.simulation_running:
+            self.current_speed = (self.current_speed + 10) % 120
+            self.current_rpm = (self.current_rpm + 100) % 7000
+            self.update_display()
+            self.root.after(1000, self.simulate_speed)
 
     def read_obd2_data(self):
-     if not self.connection or not self.connection.is_connected():
-        print("OBD2 connection lost. Switching to simulation mode.")
-        self.use_obd2 = False  # Fall back to simulation mode
-        self.simulate_speed()  # Start simulation
-        return
+        if not self.connection or not self.connection.is_connected():
+            print("OBD2 connection lost. Switching to simulation mode.")
+            self.use_obd2 = False
+            return
 
-     try:
-        speed_cmd = obd.commands.SPEED
-        rpm_cmd = obd.commands.RPM
+        try:
+            speed_cmd = obd.commands.SPEED
+            rpm_cmd = obd.commands.RPM
 
-        speed_response = self.connection.query(speed_cmd)
-        rpm_response = self.connection.query(rpm_cmd)
+            speed_response = self.connection.query(speed_cmd)
+            rpm_response = self.connection.query(rpm_cmd)
 
-        if not speed_response.is_null():
-            self.current_speed = int(speed_response.value.to("km/h").magnitude)
-        if not rpm_response.is_null():
-            self.current_rpm = int(rpm_response.value.magnitude)
+            if not speed_response.is_null():
+                self.current_speed = int(speed_response.value.to("km/h").magnitude)
+            if not rpm_response.is_null():
+                self.current_rpm = int(rpm_response.value.magnitude)
 
-        print(f"OBD2 Speed: {self.current_speed} km/h, RPM: {self.current_rpm}")
-     except Exception as e:
-        print(f"Error reading OBD2 data: {e}")
-        self.use_obd2 = False  # Fall back to simulation mode
-        self.simulate_speed()
+            print(f"OBD2 Speed: {self.current_speed} km/h, RPM: {self.current_rpm}")
+            self.update_display()
+        except Exception as e:
+            print(f"Error reading OBD2 data: {e}")
 
-     self.root.after(1000, self.read_obd2_data)
+        self.root.after(1000, self.read_obd2_data)
 
 
     def toggle_obd2_mode(self):
@@ -146,13 +143,22 @@ class CarGadgetApp:
 
 
     def deferred_initialization(self):
-     # Perform resource-heavy tasks here
-     self.setup_speed()
-     self.setup_rpm()
-     self.setup_fuel()
-     self.setup_obd2()  # OBD2 setup
-      # Mark loading as complete
-     self.loading_complete = True
+        # Perform resource-heavy tasks here
+        self.setup_speed()
+        self.setup_rpm()
+        self.setup_fuel()
+        self.setup_obd2()  # OBD2 setup
+
+        # Automatically start OBD2 data fetching if connected
+        if self.connection and self.connection.is_connected():
+            self.use_obd2 = True
+            print("OBD-II Connected")
+            self.read_obd2_data()  # Start reading OBD2 data
+        else:
+            print("OBD-II Not Connected")
+
+        # Mark loading as complete
+        self.loading_complete = True
 
 
          
@@ -749,7 +755,12 @@ class CarGadgetApp:
      self.close_button.place(relx=0.5, rely=0.7, anchor='center')  # Adjusted relx to 0.5 for centering
 
 
-
+    def update_display(self):
+        if self.screen_mode == 1:  # Speed mode
+            self.canvas.itemconfig(self.speed_text_id, text=f"{self.current_speed} km/h")
+            self.canvas.itemconfig(self.distance_text_id, text=f"{self.total_distance:.2f} km")
+        elif self.screen_mode == 2:  # RPM mode
+            self.canvas.itemconfig(self.rpm_text_id, text=f"{self.current_rpm}")
 
 
     def toggle_simulation(self):
@@ -759,18 +770,14 @@ class CarGadgetApp:
             self.start_simulation()
 
     def start_simulation(self):
-        if self.menu_visible:
-            self.hide_menu()
-
-        if self.use_obd2 and self.connection and self.connection.is_connected():
-            self.read_obd2_data()  # Start reading OBD2 data if connected
-        else:
-            # Simulation mode
-            self.current_speed = 0
-            self.current_rpm = 0
-            self.fuel_percentage = 100
+        if self.use_obd2:
+            print("Cannot start simulation while OBD-II is active.")
+            return
 
         self.simulation_running = True
+        self.current_speed = 0
+        self.current_rpm = 0
+        self.simulate_speed()
         self.start_simulation_button.config(text="Stop Simulation")
         self.show_speed()
 
