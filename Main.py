@@ -549,7 +549,7 @@ class CarGadgetApp:
 
  
     def update_speed(self):
-     if self.screen_mode == 1 and (self.simulation_running or self.use_obd2):
+     if self.screen_mode == 1 and self.simulation_running:
         self.canvas.itemconfig(self.speed_text_id, text=f"{self.current_speed} km/h")
 
         current_time = time.time()
@@ -595,7 +595,7 @@ class CarGadgetApp:
      self.update_rpm()
 
     def update_rpm(self):
-     if self.screen_mode == 2 and (self.simulation_running or self.use_obd2):
+     if self.screen_mode == 2 and self.simulation_running:
         # Update background GIF frame
         self.current_frame_rpm = (self.current_frame_rpm + 1) % len(self.gif_frames_rpm)
         self.canvas.itemconfig(self.rpm_image_id, image=self.gif_frames_rpm[self.current_frame_rpm])
@@ -759,12 +759,8 @@ class CarGadgetApp:
         if self.screen_mode == 1:  # Speed mode
             self.canvas.itemconfig(self.speed_text_id, text=f"{self.current_speed} km/h")
             self.canvas.itemconfig(self.distance_text_id, text=f"{self.total_distance:.2f} km")
-            self.update_background()  # Ajoute la mise à jour de l'animation de fond
-            self.update_miata_gif()  # Ajoute l'animation Miata
         elif self.screen_mode == 2:  # RPM mode
             self.canvas.itemconfig(self.rpm_text_id, text=f"{self.current_rpm}")
-            self.update_rpm()  # Ajoute l'animation RPM
-
 
 
     def toggle_simulation(self):
