@@ -549,7 +549,7 @@ class CarGadgetApp:
 
  
     def update_speed(self):
-     if self.screen_mode == 1 and self.simulation_running:
+     if self.screen_mode == 1 and (self.simulation_running or self.use_obd2):
         self.canvas.itemconfig(self.speed_text_id, text=f"{self.current_speed} km/h")
 
         current_time = time.time()
@@ -561,10 +561,10 @@ class CarGadgetApp:
         self.canvas.itemconfig(self.distance_text_id, text=f"{self.total_distance:.2f} km")
 
         # Adjust the simulated speed with a fixed increment
-        if self.current_speed >= 180:
-            self.speed_direction = -1
-        elif self.current_speed <= 20:
-            self.speed_direction = 1
+        #if self.current_speed >= 180:
+        #    self.speed_direction = -1
+        #elif self.current_speed <= 20:
+        #    self.speed_direction = 1
 
         self.current_speed += self.speed_direction
         # Schedule the next speed update
