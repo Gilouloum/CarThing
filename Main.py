@@ -438,7 +438,7 @@ class CarGadgetApp:
     import random
 
     def update_miata_gif(self):
-     if self.simulation_running:
+     if self.simulation_running or self.use_obd2:
         # Transition to high speed (miata20 then miata21)
         if self.current_speed >= 100:
             if not self.transition_playing and self.current_miata_gif_index != 7:
@@ -518,7 +518,7 @@ class CarGadgetApp:
 
 
     def update_background(self):
-     if self.simulation_running:  # Ensure background only updates when simulation is running
+     if self.simulation_running or self.use_obd2:  # Ensure background only updates when simulation is running
         # Define the speed limits for scaling
         min_speed = 0    # Minimum speed (no movement)
         max_speed = 175  # Maximum speed for 2x speed
