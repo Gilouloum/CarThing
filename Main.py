@@ -802,7 +802,7 @@ class CarGadgetApp:
      script_dir = os.path.dirname(os.path.abspath(__file__))
 
      # Define the relative path to 'speed' folder
-     base_path = os.path.join(script_dir, "other")
+     base_path = os.path.join(script_dir, "Other")
      original_image = Image.open(f"{base_path}/Error.png")
      resized_image = original_image.resize((450, 450), Image.Resampling.LANCZOS)  # Use LANCZOS for high-quality resizing
      self.error_bg = ImageTk.PhotoImage(resized_image)
