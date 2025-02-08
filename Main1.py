@@ -84,6 +84,87 @@ class CarGadgetApp:
         # Run heavy initialization in a separate thread
         threading.Thread(target=self.deferred_initialization, daemon=True).start()
 
+        #arrow speed
+        self.speed_increment = 1
+        self.rpm_increment = 100
+        self.max_speed = 180
+        self.max_rpm = 7000
+        self.min_speed = -20
+        self.min_rpm = 0
+        
+        # Initialize speed direction and rpm direction
+        self.speed_direction = 0
+        self.rpm_direction = 0
+
+          # Bind keypress and key release events
+        self.root.bind('<Up>', self.start_increasing_speed)
+        self.root.bind('<KeyRelease-Up>', self.stop_speed_change)
+        self.root.bind('<Down>', self.start_decreasing_speed)
+        self.root.bind('<KeyRelease-Down>', self.stop_speed_change)
+
+
+        
+        self.update_display()
+    
+    def start_increasing_speed(self, event):
+         self.speed_direction = 1
+         self.rpm_direction = 1
+         self.simulation_running = True
+        
+    def start_decreasing_speed(self, event):
+        self.speed_direction = -1
+        self.rpm_direction = -1
+        self.simulation_running = True
+        
+    def stop_speed_change(self, event):
+        self.speed_direction = 0
+        self.rpm_direction = 0
+        if self.current_speed == 0:
+            self.simulation_running = False
+
+
+
+    def increase_speed(self, event):
+        if self.current_speed + self.speed_increment <= self.max_speed:
+            self.current_speed += self.speed_increment
+        if self.current_rpm + self.rpm_increment <= self.max_rpm:
+            self.current_rpm += self.rpm_increment
+        self.update_display()
+
+    def decrease_speed(self, event):
+        if self.current_speed - self.speed_increment >= self.min_speed:
+            self.current_speed -= self.speed_increment
+        if self.current_rpm - self.rpm_increment >= self.min_rpm:
+            self.current_rpm -= self.rpm_increment
+        self.update_display()
+
+    def update_animation(self):
+        self.update_display()
+        self.root.after(100, self.update_animation)  # Refresh every 100ms
+
+    def stop_animations(self):
+     """Stops background and Miata animation when speed is zero."""
+     self.canvas.itemconfig(self.car_image_speed_id, image=self.miata_gif_frames_speed[0])  # Keep first frame
+     self.root.after_cancel(self.update_background)  # Stop background updates
+
+    def reverse_animations(self):
+      """Reverses background and Miata animation to simulate reversing."""
+      self.current_frame_speed = (self.current_frame_speed - 1) % len(self.gif_frames_speed)
+      self.canvas.itemconfig(self.speed_image_id, image=self.gif_frames_speed[self.current_frame_speed])
+
+      self.current_frame_miata_speed = (self.current_frame_miata_speed - 1) % len(self.miata_gif_frames_speed)
+      self.canvas.itemconfig(self.car_image_speed_id, image=self.miata_gif_frames_speed[self.current_frame_miata_speed])
+
+      self.root.after(100, self.reverse_animations)  # Keep reversing
+
+    def resume_animations(self):
+     """Resumes normal animation speed when moving forward."""
+     self.update_background()
+     self.update_miata_gif()
+
+
+    def start_simulation(self):
+     self.update_animation()  # Replaces simulate_speed()
 
 
     def setup_obd2(self):
@@ -93,12 +174,7 @@ class CarGadgetApp:
          print(f"Failed to connect to OBD2: {e}")
          self.connection = None
 
-    def simulate_speed(self):
-        if self.simulation_running:
-            self.current_speed = (self.current_speed + 10) % 120
-            self.current_rpm = (self.current_rpm + 100) % 7000
-            self.update_display()
-            self.root.after(1000, self.simulate_speed)
+
 
     def read_obd2_data(self):
         if not self.connection or not self.connection.is_connected():
@@ -123,7 +199,7 @@ class CarGadgetApp:
         except Exception as e:
             print(f"Error reading OBD2 data: {e}")
 
-        self.root.after(1000, self.read_obd2_data)
+        self.root.after(500, self.read_obd2_data)
 
 
     def toggle_obd2_mode(self):
@@ -560,18 +636,12 @@ class CarGadgetApp:
         self.total_distance += distance_increment
         self.canvas.itemconfig(self.distance_text_id, text=f"{self.total_distance:.2f} km")
 
-        # Adjust the simulated speed with a fixed increment
-        #if self.current_speed >= 180:
-        #    self.speed_direction = -1
-        #elif self.current_speed <= 20:
-        #    self.speed_direction = 1
-
+        # Adjust speed based on key press
         self.current_speed += self.speed_direction
-        # Schedule the next speed update
+        self.current_speed = max(self.min_speed, min(self.current_speed, self.max_speed))  # Keep within limits
+
+        # Schedule next update
         self.root.after(100, self.update_speed)
-
-
-
 
 
     def show_rpm(self):
@@ -770,16 +840,17 @@ class CarGadgetApp:
             self.start_simulation()
 
     def start_simulation(self):
-        if self.use_obd2:
-            print("Cannot start simulation while OBD-II is active.")
-            return
+     if self.use_obd2:
+        print("Cannot start simulation while OBD-II is active.")
+        return
 
-        self.simulation_running = True
-        self.current_speed = 0
-        self.current_rpm = 0
-        self.simulate_speed()
-        self.start_simulation_button.config(text="Stop Simulation")
-        self.show_speed()
+     self.simulation_running = True
+     self.current_speed = 0
+     self.current_rpm = 0
+     self.update_speed()  # Start the speed updating loop
+     self.start_simulation_button.config(text="Stop Simulation")
+     self.show_speed()
+
 
     def stop_simulation(self):
         self.simulation_running = False
