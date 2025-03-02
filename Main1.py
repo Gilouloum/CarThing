@@ -103,6 +103,10 @@ class CarGadgetApp:
         self.root.bind('<KeyRelease-Down>', self.stop_speed_change)
 
 
+        self.gif_frames_race = []
+
+
+
         
         self.update_display()
     
@@ -376,8 +380,33 @@ class CarGadgetApp:
      self.rpm_image_id = None
      self.rpm_text_id = None
 
+##################################################################################################################
+
+    def setup_race(self):
+     # Initialize race-specific variables
+     self.gif_frames_race = []  # ✅ Initialize the list only once
+     self.race_start_time = None
+     self.time_to_reach_100kph = None
+
+     # Load the background GIF for the race scene
+     script_dir = os.path.dirname(os.path.abspath(__file__))
+     base_path = os.path.join(script_dir, "Speed")
+     self.bg_gif_race = Image.open(f"{base_path}/light-speed.gif")
+
+     try:
+         while True:
+             frame = self.bg_gif_race.copy().convert('RGBA').resize((450, 450), Image.Resampling.LANCZOS)
+             self.gif_frames_race.append(ImageTk.PhotoImage(frame))  # ✅ Store the frames
+             self.bg_gif_race.seek(self.bg_gif_race.tell() + 1)
+     except EOFError:
+         pass
+
+     self.current_frame_race = 0
+
+##################################################################################################################
 
     def setup_fuel(self):
+    
      # Get the directory where the script is located
      script_dir = os.path.dirname(os.path.abspath(__file__))
 
@@ -430,14 +459,6 @@ class CarGadgetApp:
      self.drink_image_id = None
      self.fuel_text_id = None
      self.current_frame_miata = 0  # Initialize the miata gif frame counter
-
- 
-
-
-
-
-  
-    
 
 
     def play_transition_miata20(self, reverse=False):
@@ -747,7 +768,73 @@ class CarGadgetApp:
      # Calculate the frame index based on the fuel percentage
      frame_index = int((1 - (self.fuel_percentage / 100)) * (self.total_frames_fuel - 1))
      return frame_index
+
+
+
+
+##################################################################################################################
+    def show_race(self):
+     self.screen_mode = 5  # Set screen mode to race
+     self.canvas.delete("all")
+
+     # ✅ Only load race setup if frames are missing
+     if not self.gif_frames_race:
+         self.setup_race()
+
+     self.race_image_id = self.canvas.create_image(0, 0, anchor='nw', image=self.gif_frames_race[0])
+
+     self.speed_text_id = self.canvas.create_text(
+         225, 250, 
+         text=f"{self.current_speed} km/h",
+         font=('Press Start 2P', 48, 'bold'),
+         fill='white'
+     )
+
+     if self.current_speed == 0:
+         self.race_start_time = time.time()
+
+     self.update_race()
+
+
+
     
+    def update_race(self):
+     if self.screen_mode == 5 and (self.simulation_running or self.use_obd2):
+        self.canvas.itemconfig(self.speed_text_id, text=f"{self.current_speed} km/h")
+
+        current_time = time.time()
+        elapsed_time = current_time - self.last_time
+        self.last_time = current_time
+
+        # Adjust speed based on key press
+        self.current_speed += self.speed_direction
+        self.current_speed = max(self.min_speed, min(self.current_speed, self.max_speed))  # Keep within limits
+
+        # Update background GIF frame based on speed
+        if self.current_speed > 0:
+            self.current_frame_race = (self.current_frame_race + 1) % len(self.gif_frames_race)
+            self.canvas.itemconfig(self.race_image_id, image=self.gif_frames_race[self.current_frame_race])
+
+        # Check if the race has started
+        if self.race_start_time is not None:
+            # Calculate time to reach 100 kph
+            if self.current_speed >= 100 and self.time_to_reach_100kph is None:
+                self.time_to_reach_100kph = current_time - self.race_start_time
+                self.canvas.create_text(
+                    50, 50,  # Top left corner
+                    text=f"Time to 100 kph: {self.time_to_reach_100kph:.2f} s",
+                    font=('Press Start 2P', 12, 'bold'),
+                    fill='white',
+                    anchor='nw'
+                )
+
+        # Schedule next update
+        self.root.after(max(100 - self.current_speed, 10), self.update_race)
+
+
+##################################################################################################################
+
+
 
      
     def show_clock(self):
@@ -788,6 +875,7 @@ class CarGadgetApp:
  
 
     def on_click(self, event):
+
      if self.menu_visible:
          return
      elif self.screen_mode == 0:  # Intro mode
@@ -797,9 +885,11 @@ class CarGadgetApp:
      elif self.screen_mode == 2:  # RPM mode
          self.show_fuel()
      elif self.screen_mode == 3:  # Fuel mode
-         self.show_clock()  # Add this line for the new clock scene
+         self.show_race()  # Show race scene after fuel scene
      elif self.screen_mode == 4:  # Clock mode
          self.show_speed()
+     elif self.screen_mode == 5:  # Race mode
+         self.show_clock()  # Show clock scene after race scene ##################################################################################################################
 
 
 
