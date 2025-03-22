@@ -5,12 +5,12 @@ import time
 import obd  # Adding the OBD2 library
 import os
 import threading
-
+from obd_simulator import OBDSimulator, OBDSimulatorGUI
+import random
 
 
 class CarGadgetApp:
     def __init__(self, root):
-        self.loading_complete = False  # Flag to indicate if loading is complete
 
         self.root = root
         self.root.title("Car Gadget")
@@ -48,6 +48,9 @@ class CarGadgetApp:
         self.swipe_threshold = 50
         self.menu_visible = False
 
+        # Initialize the loading_complete attribute
+        self.loading_complete = False
+
         # Initialize simulation variables
         self.current_speed = 0
         self.current_rpm = 0
@@ -84,67 +87,31 @@ class CarGadgetApp:
         # Run heavy initialization in a separate thread
         threading.Thread(target=self.deferred_initialization, daemon=True).start()
 
-        #arrow speed
+        # Arrow speed
         self.speed_increment = 1
         self.rpm_increment = 100
         self.max_speed = 180
         self.max_rpm = 7000
         self.min_speed = -20
         self.min_rpm = 0
-        
+
         # Initialize speed direction and rpm direction
         self.speed_direction = 0
         self.rpm_direction = 0
-
-          # Bind keypress and key release events
-        self.root.bind('<Up>', self.start_increasing_speed)
-        self.root.bind('<KeyRelease-Up>', self.stop_speed_change)
-        self.root.bind('<Down>', self.start_decreasing_speed)
-        self.root.bind('<KeyRelease-Down>', self.stop_speed_change)
-
-
         self.gif_frames_race = []
-
-
-
-        
         self.update_display()
+
+        # Initialize the OBD simulator
+        self.obd_simulator = OBDSimulator()
+        self.simulator_gui = None
     
-    def start_increasing_speed(self, event):
-         self.speed_direction = 1
-         self.rpm_direction = 1
-         self.simulation_running = True
-        
-    def start_decreasing_speed(self, event):
-        self.speed_direction = -1
-        self.rpm_direction = -1
-        self.simulation_running = True
-        
-    def stop_speed_change(self, event):
-        self.speed_direction = 0
-        self.rpm_direction = 0
-        if self.current_speed == 0:
-            self.simulation_running = False
 
-
-
-    def increase_speed(self, event):
-        if self.current_speed + self.speed_increment <= self.max_speed:
-            self.current_speed += self.speed_increment
-        if self.current_rpm + self.rpm_increment <= self.max_rpm:
-            self.current_rpm += self.rpm_increment
-        self.update_display()
-
-    def decrease_speed(self, event):
-        if self.current_speed - self.speed_increment >= self.min_speed:
-            self.current_speed -= self.speed_increment
-        if self.current_rpm - self.rpm_increment >= self.min_rpm:
-            self.current_rpm -= self.rpm_increment
-        self.update_display()
 
     def update_animation(self):
         self.update_display()
         self.root.after(100, self.update_animation)  # Refresh every 100ms
+
+
 
     def stop_animations(self):
      """Stops background and Miata animation when speed is zero."""
@@ -171,19 +138,25 @@ class CarGadgetApp:
      self.update_animation()  # Replaces simulate_speed()
 
 
-    def setup_obd2(self):
-     try:
-         self.connection = obd.OBD("/dev/ttyUSB0")  # Connect to the car's OBD-II port
-     except Exception as e:
-         print(f"Failed to connect to OBD2: {e}")
-         self.connection = None
 
+
+    def setup_obd2(self):
+        if self.use_obd2:
+            try:
+                self.connection = obd.OBD("/dev/ttyUSB0")  # Connect to the car's OBD-II port
+            except Exception as e:
+                print(f"Failed to connect to OBD2: {e}")
+                self.connection = None
+        else:
+            self.obd_simulator = OBDSimulator()  # Initialize the simulator
 
 
     def read_obd2_data(self):
+     if self.use_obd2:
         if not self.connection or not self.connection.is_connected():
             print("OBD2 connection lost. Switching to simulation mode.")
             self.use_obd2 = False
+            self.setup_obd2()
             return
 
         try:
@@ -194,24 +167,32 @@ class CarGadgetApp:
             rpm_response = self.connection.query(rpm_cmd)
 
             if not speed_response.is_null():
-                self.current_speed = int(speed_response.value.to("km/h").magnitude)
+                self.current_speed = int(round(speed_response.value.to("km/h").magnitude))
             if not rpm_response.is_null():
-                self.current_rpm = int(rpm_response.value.magnitude)
+                self.current_rpm = int(round(rpm_response.value.magnitude))
 
             print(f"OBD2 Speed: {self.current_speed} km/h, RPM: {self.current_rpm}")
-            self.update_display()
         except Exception as e:
             print(f"Error reading OBD2 data: {e}")
+     else:
+        # Use simulated data
+        data = self.obd_simulator.get_data()
+        self.current_speed = int(round(data["speed"]))
+        self.current_rpm = int(round(data["rpm"]))
+        print(f"Simulated Speed: {self.current_speed} km/h, RPM: {self.current_rpm}")
 
-        self.root.after(500, self.read_obd2_data)
-
+     self.update_display()
+     self.root.after(500, self.read_obd2_data)
 
     def toggle_obd2_mode(self):
      self.use_obd2 = not self.use_obd2
+     self.setup_obd2()  # Reinitialize the connection or simulator
      if self.use_obd2:
-         print("Switched to OBD2 mode.")
+        print("Switched to OBD2 mode.")
      else:
-         print("Switched to simulation mode.")
+        print("Switched to simulation mode.")
+     self.update_status_label()
+
 
 
     def update_status_label(self):
@@ -367,7 +348,7 @@ class CarGadgetApp:
          self.turbo_images[i] = ImageTk.PhotoImage(Image.open(img_path).resize((200, 200), Image.Resampling.LANCZOS))
     
      # Load background GIF frames
-     self.bg_gif_rpm = Image.open(f"{base_path}/backgroundHallo.gif")
+     self.bg_gif_rpm = Image.open(f"{base_path}/background.gif")
      self.gif_frames_rpm = []
      try:
          while True:
@@ -384,9 +365,12 @@ class CarGadgetApp:
 
     def setup_race(self):
      # Initialize race-specific variables
-     self.gif_frames_race = []  # ✅ Initialize the list only once
+     self.gif_frames_race = []
      self.race_start_time = None
      self.time_to_reach_100kph = None
+     self.last_three_times = []
+     self.best_time = None
+     self.green_filter_id = None
 
      # Load the background GIF for the race scene
      script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -396,7 +380,7 @@ class CarGadgetApp:
      try:
          while True:
              frame = self.bg_gif_race.copy().convert('RGBA').resize((450, 450), Image.Resampling.LANCZOS)
-             self.gif_frames_race.append(ImageTk.PhotoImage(frame))  # ✅ Store the frames
+             self.gif_frames_race.append(ImageTk.PhotoImage(frame))
              self.bg_gif_race.seek(self.bg_gif_race.tell() + 1)
      except EOFError:
          pass
@@ -506,10 +490,14 @@ class CarGadgetApp:
 
      # Set initial car GIF based on speed threshold
      if self.current_speed >= 100:
-        self.miata_gif_frames_speed = self.miata_gif_list[6]  # miata21 frames for speeds >= 100
+        self.miata_gif_frames_speed = self.miata_gif_list[7]  # miata21 frames for speeds >= 100
+        self.current_miata_gif_index = 7
      else:
-        self.miata_gif_frames_speed = self.miata_gif_list[0]  # miata1 frames for speeds < 100
+        # Randomly select a GIF (miata1 to miata6) when speed is less than 100
+        self.current_miata_gif_index = random.randint(0, 5)  # miata1 to miata6
+        self.miata_gif_frames_speed = self.miata_gif_list[self.current_miata_gif_index]
 
+     self.current_frame_miata_speed = 0
      self.car_image_speed_id = self.canvas.create_image(20, 40, anchor='nw', image=self.miata_gif_frames_speed[0])
 
      # Display speed and distance texts
@@ -527,15 +515,18 @@ class CarGadgetApp:
         fill='white'
      )
 
-     # Start animations
+     # Synchronize animations with current speed
      self.update_speed()
      self.update_background()
      self.update_miata_gif()
 
-    import random
 
     def update_miata_gif(self):
      if self.simulation_running or self.use_obd2:
+        if self.current_speed == 0:
+            # Freeze the Miata GIF when speed is 0
+            return
+
         # Transition to high speed (miata20 then miata21)
         if self.current_speed >= 100:
             if not self.transition_playing and self.current_miata_gif_index != 7:
@@ -576,26 +567,14 @@ class CarGadgetApp:
                 else:
                     # Finish reverse transition
                     self.transition_playing = False
-                    # 80% chance for miata1, 20% for miata2 to miata6
-                    if random.random() < 0.7:
-                        self.current_miata_gif_index = 0  # miata1
-                    else:
-                        self.current_miata_gif_index = random.randint(1, 5)  # miata2 to miata6
+                    # Randomly select a new GIF (miata1 to miata6)
+                    self.current_miata_gif_index = random.randint(0, 5)  # miata1 to miata6
                     self.miata_gif_frames_speed = self.miata_gif_list[self.current_miata_gif_index]
                     self.current_frame_miata_speed = 0
 
             elif not self.transition_playing:
                 # Continue playing the selected GIF until it completes
-                if self.current_frame_miata_speed < len(self.miata_gif_frames_speed) - 1:
-                    self.current_frame_miata_speed += 1
-                else:
-                    # Re-select GIF after current one finishes
-                    if random.random() < 0.7:
-                        self.current_miata_gif_index = 0  # miata1
-                    else:
-                        self.current_miata_gif_index = random.randint(1, 5)  # miata2 to miata6
-                    self.miata_gif_frames_speed = self.miata_gif_list[self.current_miata_gif_index]
-                    self.current_frame_miata_speed = 0
+                self.current_frame_miata_speed = (self.current_frame_miata_speed + 1) % len(self.miata_gif_frames_speed)
 
         # Update the canvas with the current frame
         self.canvas.itemconfig(self.car_image_speed_id, image=self.miata_gif_frames_speed[self.current_frame_miata_speed])
@@ -610,12 +589,12 @@ class CarGadgetApp:
 
 
 
-
-
-
-
     def update_background(self):
      if self.simulation_running or self.use_obd2:  # Ensure background only updates when simulation is running
+        if self.current_speed == 0:
+            # Freeze the background GIF when speed is 0
+            return
+
         # Define the speed limits for scaling
         min_speed = 0    # Minimum speed (no movement)
         max_speed = 175  # Maximum speed for 2x speed
@@ -643,8 +622,6 @@ class CarGadgetApp:
 
 
 
-
- 
     def update_speed(self):
      if self.screen_mode == 1 and (self.simulation_running or self.use_obd2):
         self.canvas.itemconfig(self.speed_text_id, text=f"{self.current_speed} km/h")
@@ -661,8 +638,17 @@ class CarGadgetApp:
         self.current_speed += self.speed_direction
         self.current_speed = max(self.min_speed, min(self.current_speed, self.max_speed))  # Keep within limits
 
+        # Re-trigger animations if speed changes from 0 to a positive value
+        if self.current_speed > 0 and self.last_speed == 0:
+            self.update_miata_gif()
+            self.update_background()
+
+        # Update the last speed
+        self.last_speed = self.current_speed
+
         # Schedule next update
         self.root.after(100, self.update_speed)
+
 
 
     def show_rpm(self):
@@ -777,27 +763,23 @@ class CarGadgetApp:
      self.screen_mode = 5  # Set screen mode to race
      self.canvas.delete("all")
 
-     # ✅ Only load race setup if frames are missing
      if not self.gif_frames_race:
-         self.setup_race()
+        self.setup_race()
 
      self.race_image_id = self.canvas.create_image(0, 0, anchor='nw', image=self.gif_frames_race[0])
 
      self.speed_text_id = self.canvas.create_text(
-         225, 250, 
-         text=f"{self.current_speed} km/h",
-         font=('Press Start 2P', 48, 'bold'),
-         fill='white'
+        225, 250,
+        text=f"{self.current_speed} km/h",
+        font=('Press Start 2P', 48, 'bold'),
+        fill='white'
      )
 
      if self.current_speed == 0:
-         self.race_start_time = time.time()
+        self.race_start_time = time.time()
 
      self.update_race()
 
-
-
-    
     def update_race(self):
      if self.screen_mode == 5 and (self.simulation_running or self.use_obd2):
         self.canvas.itemconfig(self.speed_text_id, text=f"{self.current_speed} km/h")
@@ -806,30 +788,74 @@ class CarGadgetApp:
         elapsed_time = current_time - self.last_time
         self.last_time = current_time
 
-        # Adjust speed based on key press
         self.current_speed += self.speed_direction
-        self.current_speed = max(self.min_speed, min(self.current_speed, self.max_speed))  # Keep within limits
+        self.current_speed = max(self.min_speed, min(self.current_speed, self.max_speed))
 
-        # Update background GIF frame based on speed
         if self.current_speed > 0:
             self.current_frame_race = (self.current_frame_race + 1) % len(self.gif_frames_race)
             self.canvas.itemconfig(self.race_image_id, image=self.gif_frames_race[self.current_frame_race])
 
-        # Check if the race has started
         if self.race_start_time is not None:
-            # Calculate time to reach 100 kph
             if self.current_speed >= 100 and self.time_to_reach_100kph is None:
                 self.time_to_reach_100kph = current_time - self.race_start_time
-                self.canvas.create_text(
-                    50, 50,  # Top left corner
-                    text=f"Time to 100 kph: {self.time_to_reach_100kph:.2f} s",
-                    font=('Press Start 2P', 12, 'bold'),
-                    fill='white',
-                    anchor='nw'
-                )
+                self.last_three_times.append(self.time_to_reach_100kph)
+                if len(self.last_three_times) > 3:
+                    self.last_three_times.pop(0)
+                if self.best_time is None or self.time_to_reach_100kph < self.best_time:
+                    self.best_time = self.time_to_reach_100kph
 
-        # Schedule next update
+                self.update_time_display()
+
+        if self.current_speed >= 100 and self.green_filter_id is None:
+            self.green_filter_id = self.canvas.create_rectangle(
+                0, 0, 450, 450, fill='green', stipple='gray50'
+            )
+        elif self.current_speed < 100 and self.green_filter_id is not None:
+            self.canvas.delete(self.green_filter_id)
+            self.green_filter_id = None
+
+        # Reset time_to_reach_100kph when speed drops to 0
+        if self.current_speed == 0:
+            self.time_to_reach_100kph = None
+            self.race_start_time = current_time  # Reset the start time for the next race
+
         self.root.after(max(100 - self.current_speed, 10), self.update_race)
+
+    def update_time_display(self):
+     self.canvas.delete("time_text")
+
+     # Display last three times at the far left corner
+     y_position = 50
+     self.canvas.create_text(
+        10, y_position - 20,
+        text="Last 0-100:",
+        font=('Press Start 2P', 12, 'bold'),
+        fill='white',
+        anchor='nw',
+        tags="time_text"
+     )
+     for i, time_to_100 in enumerate(self.last_three_times):
+        self.canvas.create_text(
+            10, y_position,
+            text=f"       - {time_to_100:.2f} s",
+            font=('Press Start 2P', 12, 'bold'),
+            fill='white',
+            anchor='nw',
+            tags="time_text"
+        )
+        y_position += 20
+
+     # Display best time at the far right corner
+     if self.best_time is not None:
+        self.canvas.create_text(
+            440, 50,
+            text=f"Best Time: {self.best_time:.2f} s",
+            font=('Press Start 2P', 12, 'bold'),
+            fill='white',
+            anchor='ne',
+            tags="time_text"
+        )
+
 
 
 ##################################################################################################################
@@ -917,33 +943,37 @@ class CarGadgetApp:
 
     def update_display(self):
         if self.screen_mode == 1:  # Speed mode
-            self.canvas.itemconfig(self.speed_text_id, text=f"{self.current_speed} km/h")
+            self.canvas.itemconfig(self.speed_text_id, text=f"{self.current_speed:.0f} km/h")
             self.canvas.itemconfig(self.distance_text_id, text=f"{self.total_distance:.2f} km")
         elif self.screen_mode == 2:  # RPM mode
-            self.canvas.itemconfig(self.rpm_text_id, text=f"{self.current_rpm}")
+            self.canvas.itemconfig(self.rpm_text_id, text=f"{self.current_rpm:.0f}")
 
 
     def toggle_simulation(self):
-        if self.simulation_running:
-            self.stop_simulation()
-        else:
-            self.start_simulation()
+     if self.simulation_running:
+        self.stop_simulation()
+     else:
+        self.start_simulation()
 
     def start_simulation(self):
-     if self.use_obd2:
-        print("Cannot start simulation while OBD-II is active.")
-        return
+        if self.use_obd2:
+            print("Cannot start simulation while OBD-II is active.")
+            return
 
-     self.simulation_running = True
-     self.current_speed = 0
-     self.current_rpm = 0
-     self.update_speed()  # Start the speed updating loop
-     self.start_simulation_button.config(text="Stop Simulation")
-     self.show_speed()
-
+        self.simulation_running = True
+        self.use_obd2 = False  # Switch to simulation mode
+        self.current_speed = 0
+        self.current_rpm = 0
+        self.simulator_gui = OBDSimulatorGUI(self.obd_simulator)  # Pass the obd_simulator instance
+        self.read_obd2_data()  # Start reading simulated data
+        self.start_simulation_button.config(text="Stop Simulation")
+        self.show_speed()
 
     def stop_simulation(self):
         self.simulation_running = False
+        if self.simulator_gui:
+            self.simulator_gui.simulation_running = False
+            self.simulator_gui.root.destroy()  # Close the simulator window
         self.start_simulation_button.config(text="Start Simulation")
 
     def show_menu(self):
