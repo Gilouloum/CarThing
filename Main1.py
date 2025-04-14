@@ -340,12 +340,12 @@ class CarGadgetApp:
      self.turbo_images = {}
     
      # Load Turbo.png (for 0 to 1400 RPM)
-     self.turbo_images[0] = ImageTk.PhotoImage(Image.open(f"{base_path}/Turbo.png").resize((200, 200), Image.Resampling.LANCZOS))
+     self.turbo_images[0] = ImageTk.PhotoImage(Image.open(f"{base_path}/Turbo.png").resize((300, 300), Image.Resampling.LANCZOS))
     
      # Load from Turbo15.png to Turbo29.png for 1500+ RPM
-     for i in range(15, 40):  # 15 to 29 corresponds to 1500 to 3900 RPM
+     for i in range(15, 50):  # 15 to 29 corresponds to 1500 to 3900 RPM
          img_path = f"{base_path}/Turbo{i}.png"
-         self.turbo_images[i] = ImageTk.PhotoImage(Image.open(img_path).resize((200, 200), Image.Resampling.LANCZOS))
+         self.turbo_images[i] = ImageTk.PhotoImage(Image.open(img_path).resize((300, 300), Image.Resampling.LANCZOS))
     
      # Load background GIF frames
      self.bg_gif_rpm = Image.open(f"{base_path}/background.gif")
@@ -659,7 +659,7 @@ class CarGadgetApp:
      self.rpm_image_id = self.canvas.create_image(0, 0, anchor='nw', image=self.gif_frames_rpm[0])
     
      # Display initial Turbo image (starting with Turbo.png for 0 RPM)
-     self.turbo_image_id = self.canvas.create_image(100, 250, anchor='nw', image=self.turbo_images[0])
+     self.turbo_image_id = self.canvas.create_image(100, 100, anchor='nw', image=self.turbo_images[0])
     
      # RPM text display
      self.rpm_text_id = self.canvas.create_text(
@@ -683,7 +683,7 @@ class CarGadgetApp:
         elif self.current_rpm < 1500:
             turbo_image_index = 0  # Still display Turbo.png for RPM less than 1500
         else:
-            turbo_image_index = min(self.current_rpm // 100, 39)  # 1500 to 2900 RPM -> Turbo15.png to Turbo29.png
+            turbo_image_index = min(self.current_rpm // 100, 49)  # 1500 to 4900 RPM -> Turbo15.png to Turbo49.png
             
         # Avoiding KeyError by ensuring valid index
         if turbo_image_index >= 0 and turbo_image_index in self.turbo_images:
