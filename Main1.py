@@ -230,7 +230,7 @@ class CarGadgetApp:
 
      # Define the relative path to 'speed' folder
         base_path = os.path.join(script_dir, "Other")
-        self.bg_gif_intro = Image.open(f"{base_path}/IntroV3.gif")
+        self.bg_gif_intro = Image.open(f"{base_path}/IntroV4.gif")
         self.gif_frames_intro = []
 
         try:

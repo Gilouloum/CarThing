@@ -1,0 +1,22 @@
+C:/Program Files/Krita (x64)/bin/ffmpeg.exe -hide_banner -y -y -r 12 -start_number 0 -start_number_range 1 -i C:/Users/yanni/Documents/GitHub/CarThing/Other/image%04d.png -i C:/Users/yanni/Documents/GitHub/CarThing/Other/KritaTempPalettegen_%06d.png -lavfi [0:v][1:v]paletteuse=dither=sierra2_4a:diff_mode=none -f gif -loop 0 -gifflags +transdiff C:/Users/yanni/Documents/GitHub/CarThing/Other/IntroV4.gif
+=====================================================
+Input #0, image2, from 'C:/Users/yanni/Documents/GitHub/CarThing/Other/image%04d.png':
+  Duration: 00:00:01.92, start: 0.000000, bitrate: N/A
+  Stream #0:0: Video: png, rgba(pc), 1920x1080 [SAR 5905:5905 DAR 16:9], 25 fps, 25 tbr, 25 tbn, 25 tbc
+Input #1, image2, from 'C:/Users/yanni/Documents/GitHub/CarThing/Other/KritaTempPalettegen_%06d.png':
+  Duration: 00:00:00.04, start: 0.000000, bitrate: N/A
+  Stream #1:0: Video: png, rgba(pc), 16x16 [SAR 1:1 DAR 1:1], 25 fps, 25 tbr, 25 tbn, 25 tbc
+Stream mapping:
+  Stream #0:0 (png) -> paletteuse:default
+  Stream #1:0 (png) -> paletteuse:palette
+  paletteuse -> Stream #0:0 (gif)
+Press [q] to stop, [?] for help
+[image2 @ 000002247725d4c0] Thread message queue blocking; consider raising the thread_queue_size option (current value: 8)
+Output #0, gif, to 'C:/Users/yanni/Documents/GitHub/CarThing/Other/IntroV4.gif':
+  Metadata:
+    encoder         : Lavf58.76.100
+  Stream #0:0: Video: gif, pal8(pc, gbr/unknown/unknown, progressive), 1920x1080 [SAR 1:1 DAR 16:9], q=2-31, 200 kb/s, 12 fps, 100 tbn (default)
+    Metadata:
+      encoder         : Lavc58.134.100 gif
+frame=    1 fps=0.0 q=-0.0 size=       0kB time=00:00:00.01 bitrate=   0.0kbits/s speed=0.184x    frame=    7 fps=0.0 q=-0.0 size=      42kB time=00:00:00.51 bitrate= 677.2kbits/s speed=0.849x    frame=   14 fps= 12 q=-0.0 size=      55kB time=00:00:01.09 bitrate= 415.9kbits/s speed=0.953x    frame=   21 fps= 12 q=-0.0 size=      67kB time=00:00:01.68 bitrate= 324.3kbits/s speed=0.984x    frame=   27 fps= 12 q=-0.0 size=      93kB time=00:00:02.18 bitrate= 348.3kbits/s speed=0.987x    frame=   32 fps= 12 q=-0.0 size=     162kB time=00:00:02.59 bitrate= 513.3kbits/s speed=0.931x    frame=   38 fps= 11 q=-0.0 size=     209kB time=00:00:03.09 bitrate= 553.3kbits/s speed=0.935x    frame=   45 fps= 12 q=-0.0 size=     216kB time=00:00:03.68 bitrate= 481.8kbits/s speed=0.948x    frame=   48 fps= 11 q=-0.0 Lsize=     220kB time=00:00:03.93 bitrate= 458.4kbits/s speed=0.941x    
+video:220kB audio:0kB subtitle:0kB other streams:0kB global headers:0kB muxing overhead: 0.008882%
