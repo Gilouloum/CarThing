@@ -311,7 +311,7 @@ class CarGadgetApp:
      self.current_frame_miata_speed = 0
 
      # Load background GIF frames
-     self.bg_gif_speed = Image.open(f"{base_path}/backgroundv9.gif")
+     self.bg_gif_speed = Image.open(f"{base_path}/backgroundv10.gif")
      self.gif_frames_speed = []
      try:
         while True:
