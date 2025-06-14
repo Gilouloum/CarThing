@@ -521,68 +521,77 @@ class CarGadgetApp:
      self.update_miata_gif()
 
 
+    
     def update_miata_gif(self):
      if self.simulation_running or self.use_obd2:
         if self.current_speed == 0:
-            # Freeze the Miata GIF when speed is 0
             return
 
-        # Transition to high speed (miata20 then miata21)
         if self.current_speed >= 100:
+            # High speed transition
             if not self.transition_playing and self.current_miata_gif_index != 7:
-                # Start miata20 transition
                 self.transition_playing = True
                 self.current_miata_gif_index = 6  # miata20
                 self.miata_gif_frames_speed = self.miata_gif_list[6]
-                self.current_frame_miata_speed = 0  # Start at first frame
+                self.current_frame_miata_speed = 0
 
             elif self.transition_playing and self.current_miata_gif_index == 6:
-                # Play miata20 frames
                 if self.current_frame_miata_speed < len(self.miata_gif_frames_speed) - 1:
                     self.current_frame_miata_speed += 1
                 else:
-                    # Transition to miata21 after miata20 finishes
                     self.transition_playing = False
                     self.current_miata_gif_index = 7  # miata21
                     self.miata_gif_frames_speed = self.miata_gif_list[7]
                     self.current_frame_miata_speed = 0
 
             elif self.current_miata_gif_index == 7:
-                # Loop miata21 frames
                 self.current_frame_miata_speed = (self.current_frame_miata_speed + 1) % len(self.miata_gif_frames_speed)
 
-        # Transition to lower speed (reverse miata20 then another GIF)
         else:
+            # Under 100 kph
             if not self.transition_playing and self.current_miata_gif_index == 7:
-                # Start reverse transition with miata20 when leaving miata21
+                # Transition from miata21 to lower speed
                 self.transition_playing = True
-                self.current_miata_gif_index = 6  # miata20
+                self.current_miata_gif_index = 6  # miata20 reverse
                 self.miata_gif_frames_speed = self.miata_gif_list[6]
-                self.current_frame_miata_speed = len(self.miata_gif_frames_speed) - 1  # Start from last frame
+                self.current_frame_miata_speed = len(self.miata_gif_frames_speed) - 1
 
             elif self.transition_playing and self.current_miata_gif_index == 6:
-                # Reverse play miata20 frames
+                # Reverse play miata20
                 if self.current_frame_miata_speed > 0:
                     self.current_frame_miata_speed -= 1
                 else:
-                    # Finish reverse transition
                     self.transition_playing = False
-                    # Randomly select a new GIF (miata1 to miata6)
-                    self.current_miata_gif_index = random.randint(0, 5)  # miata1 to miata6
-                    self.miata_gif_frames_speed = self.miata_gif_list[self.current_miata_gif_index]
+                    self.current_miata_gif_index = 0  # Back to normal miata1
+                    self.miata_gif_frames_speed = self.miata_gif_list[0]
                     self.current_frame_miata_speed = 0
 
             elif not self.transition_playing:
-                # Continue playing the selected GIF until it completes
-                self.current_frame_miata_speed = (self.current_frame_miata_speed + 1) % len(self.miata_gif_frames_speed)
+                # Under 100: Continue current animation
+                if self.current_miata_gif_index == 0:
+                    # Currently playing miata1 — occasionally switch to a random event
+                    if random.random() < 0.001:  # ~0.1% chance per frame
+                        self.current_miata_gif_index = random.randint(1, 5)  # miata2 to miata6
+                        self.miata_gif_frames_speed = self.miata_gif_list[self.current_miata_gif_index]
+                        self.current_frame_miata_speed = 0
+                    else:
+                        self.current_frame_miata_speed = (self.current_frame_miata_speed + 1) % len(self.miata_gif_frames_speed)
 
-        # Update the canvas with the current frame
+                else:
+                    # Currently playing an event animation (miata2–6)
+                    if self.current_frame_miata_speed < len(self.miata_gif_frames_speed) - 1:
+                        self.current_frame_miata_speed += 1
+                    else:
+                        # Event finished — go back to miata1
+                        self.current_miata_gif_index = 0
+                        self.miata_gif_frames_speed = self.miata_gif_list[0]
+                        self.current_frame_miata_speed = 0
+
+        # Update canvas
         self.canvas.itemconfig(self.car_image_speed_id, image=self.miata_gif_frames_speed[self.current_frame_miata_speed])
-
-        # Schedule the next frame update with a fixed delay
         self.root.after(100, self.update_miata_gif)
+
      else:
-        # Reset to first frame if simulation is not running
         self.current_frame_miata_speed = 0
         self.canvas.itemconfig(self.car_image_speed_id, image=self.miata_gif_frames_speed[self.current_frame_miata_speed])
 
