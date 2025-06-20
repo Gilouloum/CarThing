@@ -143,7 +143,7 @@ class CarGadgetApp:
     def setup_obd2(self):
         if self.use_obd2:
             try:
-                self.connection = obd.OBD("/dev/ttyUSB0")  # Connect to the car's OBD-II port
+                self.connection = obd.OBD()  # Connect to the car's OBD-II port # auto-detects the correct port
             except Exception as e:
                 print(f"Failed to connect to OBD2: {e}")
                 self.connection = None
