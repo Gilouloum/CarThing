@@ -6,7 +6,7 @@ import obd  # Adding the OBD2 library
 import os
 import threading
 from obd_simulator import OBDSimulator, OBDSimulatorGUI
-import random
+import random 
 
 
 class CarGadgetApp:
