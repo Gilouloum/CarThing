@@ -81,7 +81,7 @@ class CarGadgetApp:
         self.last_time = time.time()  # Track the last update time
 
         # OBD2 setup
-        self.use_obd2 = False  # Flag to switch between OBD2 and simulation
+        self.use_obd2 = True  # Try OBD2 first, fallback later if needed # Flag to switch between OBD2 and simulation
         self.connection = None  # OBD2 connection initialization
 
         # Run heavy initialization in a separate thread
@@ -143,7 +143,7 @@ class CarGadgetApp:
     def setup_obd2(self):
         if self.use_obd2:
             try:
-                self.connection = obd.OBD()  # Connect to the car's OBD-II port # auto-detects the correct port
+                self.connection = obd.OBD("/dev/ttyUSB0") # Connect to the car's OBD-II port # auto-detects the correct port
             except Exception as e:
                 print(f"Failed to connect to OBD2: {e}")
                 self.connection = None
